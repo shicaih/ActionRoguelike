@@ -43,3 +43,8 @@ void ASExplosiveBarrel::OnProjectileHit(UPrimitiveComponent* HitComponent, AActo
 	ForceComp->FireImpulse();
 }
 
+void ASExplosiveBarrel::Explode()
+{
+	ForceComp->FireImpulse();
+}
+
