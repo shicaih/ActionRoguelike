@@ -4,7 +4,11 @@
 #include "SCharacter.h"
 
 #include "SMagicProjectile.h"
+#include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "SInteractionComponent.h"
+
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -18,6 +22,8 @@ ASCharacter::ASCharacter()
 	
 	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
 	CameraComp->SetupAttachment(SpringArmComp);
+
+	InteractionComp = CreateDefaultSubobject<USInteractionComponent>(TEXT("InteractionComp"));
 	
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
@@ -49,6 +55,7 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("PrimaryInteraction", IE_Pressed, this, &ASCharacter::PrimaryInteraction);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASCharacter::Jump);
 
@@ -75,11 +82,23 @@ void ASCharacter::MoveRight(float Value)
 
 void ASCharacter::PrimaryAttack()
 {
+	PlayAnimMontage(AttackAnim);
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &ASCharacter::AttackTimerOff, 0.2f);
+}
+
+void ASCharacter::AttackTimerOff()
+{
 	FVector const HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 	FTransform const SpawnTM = FTransform(GetControlRotation(), HandLocation);
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	
 	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+}
+
+
+void ASCharacter::PrimaryInteraction()
+{
+	InteractionComp->PrimaryInteract();
 }
 
