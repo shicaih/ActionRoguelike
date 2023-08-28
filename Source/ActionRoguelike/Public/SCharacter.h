@@ -19,6 +19,8 @@ class ACTIONROGUELIKE_API ASCharacter : public ACharacter
 protected:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AActor> ProjectileClass;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> BlackholeProjectileClass;
 
 public:
 	// Sets default values for this character's properties
@@ -44,10 +46,13 @@ protected:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
+
 	void PrimaryAttack();
+	void SpecialAttack();
 	void PrimaryInteraction();
 
 	void AttackTimerOff();
+	void SpecialAttackTimerOff();
 
 public:	
 	// Called every frame

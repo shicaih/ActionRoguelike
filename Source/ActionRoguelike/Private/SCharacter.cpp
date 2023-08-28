@@ -55,6 +55,7 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("SpecialAttack", IE_Pressed, this, &ASCharacter::SpecialAttack);
 	PlayerInputComponent->BindAction("PrimaryInteraction", IE_Pressed, this, &ASCharacter::PrimaryInteraction);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASCharacter::Jump);
@@ -86,10 +87,52 @@ void ASCharacter::PrimaryAttack()
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &ASCharacter::AttackTimerOff, 0.2f);
 }
 
+void ASCharacter::SpecialAttack()
+{
+	PlayAnimMontage(AttackAnim);
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &ASCharacter::SpecialAttackTimerOff, 0.2f);
+
+}
+
+void ASCharacter::SpecialAttackTimerOff()
+{
+	FCollisionObjectQueryParams ObjectQueryParams;
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
+	FHitResult Hit;
+	
+	auto Start = CameraComp->GetComponentLocation();
+	auto End = Start + CameraComp->GetComponentRotation().Vector() * 50000;
+	GetWorld()->LineTraceSingleByObjectType(Hit, Start, End, ObjectQueryParams);
+	auto HitActor = Hit.GetActor();
+	auto TargetLocation = Hit.GetActor() ? Hit.ImpactPoint : End; 
+	FVector const HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	auto ShootDirection = (TargetLocation - HandLocation).Rotation();
+	FTransform const SpawnTM = FTransform(ShootDirection, HandLocation);
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.Instigator = this;
+	
+	GetWorld()->SpawnActor<AActor>(BlackholeProjectileClass, SpawnTM, SpawnParams);
+}
+
 void ASCharacter::AttackTimerOff()
 {
+	FCollisionObjectQueryParams ObjectQueryParams;
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
+	FHitResult Hit;
+	
+	auto Start = CameraComp->GetComponentLocation();
+	auto End = Start + CameraComp->GetComponentRotation().Vector() * 50000;
+	GetWorld()->LineTraceSingleByObjectType(Hit, Start, End, ObjectQueryParams);
+	auto HitActor = Hit.GetActor();
+	auto TargetLocation = Hit.GetActor() ? Hit.ImpactPoint : End; 
 	FVector const HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
-	FTransform const SpawnTM = FTransform(GetControlRotation(), HandLocation);
+	auto ShootDirection = (TargetLocation - HandLocation).Rotation();
+	FTransform const SpawnTM = FTransform(ShootDirection, HandLocation);
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	SpawnParams.Instigator = this;
